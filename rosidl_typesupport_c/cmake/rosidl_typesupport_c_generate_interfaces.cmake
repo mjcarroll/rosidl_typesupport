@@ -113,6 +113,17 @@ add_custom_command(
 set(_target_suffix "__rosidl_typesupport_c")
 
 add_library(${rosidl_generate_interfaces_TARGET}${_target_suffix} ${rosidl_typesupport_c_LIBRARY_TYPE} ${_generated_sources})
+# One small translation unit is generated per interface, and the cost of a
+# compile step is largely fixed: on Windows it is about 117 ms before the
+# compiler does any work, and an sccache hit costs the same as compiling a
+# small file outright.  Build time tracks the number of translation units more
+# than the amount of code in them, so merge them.  Override with
+# -DROSIDL_GENERATED_UNITY_BUILD=OFF.
+if(NOT DEFINED ROSIDL_GENERATED_UNITY_BUILD)
+  set(ROSIDL_GENERATED_UNITY_BUILD ON)
+endif()
+set_target_properties(${rosidl_generate_interfaces_TARGET}${_target_suffix}
+  PROPERTIES UNITY_BUILD ${ROSIDL_GENERATED_UNITY_BUILD})
 if(rosidl_generate_interfaces_LIBRARY_NAME)
   set_target_properties(${rosidl_generate_interfaces_TARGET}${_target_suffix}
     PROPERTIES OUTPUT_NAME "${rosidl_generate_interfaces_LIBRARY_NAME}${_target_suffix}")
